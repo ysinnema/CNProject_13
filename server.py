@@ -5,10 +5,11 @@ import socket
 import threading
 
 import os
- 
-# Choose a port that is free
-import authentication
 
+import authentication
+import secure_messaging
+
+# Choose a port that is free
 PORT = 5000
  
 # An IPv4 address is obtained
@@ -35,6 +36,8 @@ server = socket.socket(socket.AF_INET,
 # bind the address of the
 # server to the socket
 server.bind(ADDRESS)
+
+key = secure_messaging.symmetric_key()
  
 # function to start the connection
 def startChat():
@@ -54,9 +57,11 @@ def startChat():
          
         # 1024 represents the max amount
         # of data that can be received (bytes)
-        name = conn.recv(1024).decode(FORMAT)
+        name = conn.recv(1024).decode()
 
         # challenge function
+        key_message = "KEY ".encode(FORMAT) + key
+        conn.send(key_message)
          
         # append the name and client
         # to the respective list
@@ -66,9 +71,9 @@ def startChat():
         print(f"Name is: {name}")
          
         # broadcast message
-        broadcastMessage(f"{name} has joined the chat!".encode(FORMAT))
-         
-        conn.send('Connection successful!'.encode(FORMAT))
+        broadcastMessage(secure_messaging.encrypt(f"{name} has joined the chat!", key))
+
+        conn.send(secure_messaging.encrypt('Connection successful!', key))
          
         # Start the handling thread
         thread = threading.Thread(target = handle,

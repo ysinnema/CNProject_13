@@ -18,12 +18,3 @@ def decrypt(cipher_content, key):
         return rsa.decrypt(cipher_content, key).decode('ascii')
     except:
         return False
-
-# pub, priv = asymmetric_keys()
-#
-# message = "This is a message"
-#
-# egassem = encrypt(message, pub)
-# re_message = decrypt(egassem, priv)
-#
-# print(re_message == message)

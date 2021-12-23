@@ -6,11 +6,12 @@ def symmetric_key():
     return Fernet.generate_key()
 
 
-key = symmetric_key()
+def encrypt(content, key):
+    fern = Fernet(key)
+    return fern.encrypt(content.encode('utf-8'))
 
-data = "would this work?"
 
-fern = Fernet(key)
-encr = fern.encrypt(data.encode())
-decr = fern.decrypt(encr)
-print(decr.decode())
+def decrypt(cipher_content, key):
+    fern = Fernet(key)
+    return fern.decrypt(cipher_content).decode('ascii')
+

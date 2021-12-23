@@ -7,6 +7,7 @@ from tkinter import font
 from tkinter import ttk
 import select
 import authentication
+import secure_messaging
 
 PORT = 5000
 SERVER = "192.168.1.43"
@@ -26,6 +27,12 @@ def close_pw():
 def close_user():
     window_user.destroy()
 
+def end_session():
+    # make the server not crash
+    client.shutdown(socket.SHUT_RDWR)
+    client.close()
+    window_home.destroy()
+
 def hash_string(input_string):
     pb = bytes(input_string, FORMAT)
     hash = hashlib.sha1(pb)
@@ -33,7 +40,7 @@ def hash_string(input_string):
 
 
 # GUI class for the chat
-class GUI:
+class ChatGUI:
     # constructor method
     def __init__(self):
 
@@ -41,16 +48,16 @@ class GUI:
         self.Window = Tk()
         self.Window.withdraw()
 
-        # login window
-        self.login = Toplevel()
+        # entrance window
+        self.nickname = Toplevel()
         # set the title
-        self.login.title("Nickname")
-        self.login.resizable(width=False,
-                             height=False)
-        self.login.configure(width=400,
-                             height=300)
+        self.nickname.title("Nickname")
+        self.nickname.resizable(width=False,
+                                height=False)
+        self.nickname.configure(width=400,
+                                height=300)
         # create a Label
-        self.pls = Label(self.login,
+        self.pls = Label(self.nickname,
                          text="Enter Nickname",
                          justify=CENTER,
                          font="Helvetica 14 bold")
@@ -59,7 +66,7 @@ class GUI:
                        relx=0.2,
                        rely=0.07)
         # create a Label
-        self.labelName = Label(self.login,
+        self.labelName = Label(self.nickname,
                                text="Name: ",
                                font="Helvetica 12")
 
@@ -69,7 +76,7 @@ class GUI:
 
         # create an entry box for
         # typing the message
-        self.entryName = Entry(self.login,
+        self.entryName = Entry(self.nickname,
                                font="Helvetica 14")
 
         self.entryName.place(relwidth=0.4,
@@ -80,9 +87,11 @@ class GUI:
         # set the focus of the cursor
         self.entryName.focus()
 
+        self.key = None
+
         # create a Continue Button
         # along with action
-        self.go = Button(self.login,
+        self.go = Button(self.nickname,
                          text="CONTINUE",
                          font="Helvetica 14 bold",
                          command=lambda: self.goAhead(self.entryName.get()))
@@ -92,7 +101,7 @@ class GUI:
         self.Window.mainloop()
 
     def goAhead(self, name):
-        self.login.destroy()
+        self.nickname.destroy()
         self.layout(name)
 
         # the thread to receive messages
@@ -200,22 +209,27 @@ class GUI:
     def receive(self):
         while True:
             try:
-                message = client.recv(1024).decode(FORMAT)
+                message = client.recv(1024)
+                message_text = message.decode()
 
                 # if the messages from the server is NAME send the client's name
-                if message == 'NAME':
+                if message_text == 'NAME':
                     client.send(self.name.encode(FORMAT))
+                elif message_text[:4] == 'KEY ':
+                    self.key = message_text[4:].encode(FORMAT)
                 else:
+                    decrypted_message = secure_messaging.decrypt(message, self.key)
+
                     # insert messages to text box
                     self.textCons.config(state=NORMAL)
                     self.textCons.insert(END,
-                                         message + "\n\n")
+                                         decrypted_message + "\n\n")
 
                     self.textCons.config(state=DISABLED)
                     self.textCons.see(END)
             except:
                 # an error will be printed on the command line or console if there's an error
-                print("An error occured!")
+                print("An error occurred!")
                 client.close()
                 break
 
@@ -224,13 +238,14 @@ class GUI:
         self.textCons.config(state=DISABLED)
         while True:
             message = (f"{self.name}: {self.msg}")
-            client.send(message.encode(FORMAT))
+            encrypted_message = secure_messaging.encrypt(message, self.key)
+            client.send(encrypted_message)
             break
 
 
 def login_success():
     close_login()
-    GUI()
+    ChatGUI()
 
 
 def user_not_found():
@@ -358,7 +373,7 @@ def main_screen():
     Label(text="").pack()
     Button(text="Register", width="20", height="2", command=register).pack()
     Label(text="").pack()
-    Button(text="Exit", width="20", height="2", command=window_home.destroy).pack()
+    Button(text="Exit", width="20", height="2", command=end_session).pack()
 
     window_home.mainloop()
 
