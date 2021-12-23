@@ -6,6 +6,7 @@ from tkinter import *
 from tkinter import font
 from tkinter import ttk
 import select
+import authentication
 
 PORT = 5000
 SERVER = "192.168.1.43"
@@ -26,7 +27,7 @@ def close_user():
     window_user.destroy()
 
 def hash_string(input_string):
-    pb = bytes(input_string, 'utf-8')
+    pb = bytes(input_string, FORMAT)
     hash = hashlib.sha1(pb)
     return hash.hexdigest()
 
@@ -229,7 +230,7 @@ class GUI:
 
 def login_success():
     close_login()
-    client_GUI.GUI()
+    GUI()
 
 
 def user_not_found():
@@ -241,7 +242,7 @@ def user_not_found():
     Button(window_user, text="OK", command=close_user).pack()
 
 
-def password_not_recongised():
+def password_not_recognised():
     global window_pw
     window_pw = Toplevel(window_home)
     window_pw.title("Wrong password")
@@ -255,10 +256,15 @@ def register_user():
     password_info = password.get()
     password_info = hash_string(password_info)
 
-    file = open(username_info, "w")
-    file.write(username_info + "\n")
-    file.write(password_info)
-    file.close()
+    global private_key
+
+    public_key, private_key = authentication.asymmetric_keys()
+
+    with open(username_info + ".txt", "w") as file:
+        file.write(username_info + "\n")
+        file.write(password_info + "\n")
+        file.write(str(public_key.n) + "\n")
+        file.write(str(public_key.e))
 
     username_entry.delete(0, END)
     password_entry.delete(0, END)
@@ -274,13 +280,15 @@ def login_verify():
     password_entry1.delete(0, END)
 
     list_of_files = os.listdir()
-    if username1 in list_of_files:
-        file1 = open(username1, "r")
-        verify = file1.read().splitlines()
-        if password1 in verify:
-            login_success()
-        else:
-            password_not_recongised()
+    if username1 + ".txt" in list_of_files:
+        with open(username1 + ".txt", "r") as file:
+            verify = file.readlines()
+            if password1 + "\n" in verify:
+
+                login_success()
+            else:
+                password_not_recognised()
+
     else:
         user_not_found()
 

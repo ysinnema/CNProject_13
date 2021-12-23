@@ -3,8 +3,12 @@ import socket
  
 # import threading library
 import threading
+
+import os
  
 # Choose a port that is free
+import authentication
+
 PORT = 5000
  
 # An IPv4 address is obtained
@@ -44,20 +48,22 @@ def startChat():
        
         # accept connections and returns
         # a new connection to the client
-        #  and  the address bound to it
-        conn, addr =  server.accept()
+        # and the address bound to it
+        conn, addr = server.accept()
         conn.send("NAME".encode(FORMAT))
          
         # 1024 represents the max amount
         # of data that can be received (bytes)
         name = conn.recv(1024).decode(FORMAT)
+
+        # challenge function
          
         # append the name and client
         # to the respective list
         names.append(name)
         clients.append(conn)
          
-        print(f"Name is :{name}")
+        print(f"Name is: {name}")
          
         # broadcast message
         broadcastMessage(f"{name} has joined the chat!".encode(FORMAT))
@@ -72,7 +78,21 @@ def startChat():
         # no. of clients connected
         # to the server
         print(f"active connections {threading.activeCount()-1}")
- 
+
+def challenge(conn, username):
+    nonce = os.urandom(16)
+
+    with open(username + ".txt", "r") as file:
+        info = file.readlines()
+
+    user_key = authentication.get_public_key(info[2].strip("\n"), info[3].strip("\n"))
+    nonce_encr = authentication.encrypt(nonce, user_key)
+
+    conn.send(nonce_encr)
+    nonce_back = conn.recv(1024)
+
+    return nonce == nonce_back
+
 # method to handle the
 # incoming messages
 def handle(conn, addr):
