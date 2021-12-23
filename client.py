@@ -29,6 +29,7 @@ def close_user():
 
 def end_session():
     # make the server not crash
+    # doesn't work, but here is the link https://stackoverflow.com/questions/409783/socket-shutdown-vs-socket-close
     client.shutdown(socket.SHUT_RDWR)
     client.close()
     window_home.destroy()

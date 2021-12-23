@@ -84,6 +84,7 @@ def startChat():
         # to the server
         print(f"active connections {threading.activeCount()-1}")
 
+# indpiration from https://towardsdatascience.com/encrypting-your-data-9eac85364cb
 def challenge(conn, username):
     nonce = os.urandom(16)
 
