@@ -15,7 +15,7 @@ is described in detail in the report.
 
 In the source code a couple of external libraries were used.
 In order to run the messaging application correctly the following
-libraries are necessary. The provided commands should be ran in the terminal.
+libraries are necessary. The provided commands should be run in the terminal.
 
 - rsa 
 
@@ -30,7 +30,7 @@ pip3 install cryptography
 
 ## Running the code
 
-To run the code and launch the application, the file server.py should be ran. 
+To run the code and launch the application, the file server.py should be run. 
 Then client.py needs to be executed on another terminal. This creates a new user. Run client.py again to create another user.
 The program has been tested on Windows and other operating systems should not have a problem until python libraries are compatible .
 
