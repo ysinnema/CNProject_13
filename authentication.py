@@ -1,7 +1,8 @@
 import rsa
 
+
+#generate public and corresponding private key
 def asymmetric_keys():
-    #generates public and corresponding private key
     return rsa.newkeys(1024)
 
 

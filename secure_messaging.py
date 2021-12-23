@@ -2,6 +2,7 @@ import cryptography
 from cryptography.fernet import Fernet
 
 
+# generate a symmetric key
 def symmetric_key():
     return Fernet.generate_key()
 

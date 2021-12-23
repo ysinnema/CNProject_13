@@ -1,127 +1,106 @@
-# import socket library
 import socket
- 
-# import threading library
 import threading
-
 import os
-
 import authentication
 import secure_messaging
 
-# Choose a port that is free
+# Choose a free port
 PORT = 5000
- 
-# An IPv4 address is obtained
-# for the server.  
+# IP address of the current host
 SERVER = socket.gethostbyname(socket.gethostname())
- 
-# Address is stored as a tuple
 ADDRESS = (SERVER, PORT)
- 
-# the format in which encoding
-# and decoding will occur
+
 FORMAT = "utf-8"
  
-# Lists that will contains
-# all the clients connected to
-# the server and their names.
+# Instantiate lists of connected clients
 clients, names = [], []
  
-# Create a new socket for
-# the server
+# New socket for the server
 server = socket.socket(socket.AF_INET,
                        socket.SOCK_STREAM)
- 
-# bind the address of the
-# server to the socket
 server.bind(ADDRESS)
 
+# Generate symmetric key for encrypting and decrypting messages
 key = secure_messaging.symmetric_key()
  
-# function to start the connection
+# Main function: initialize the server
 def startChat():
-   
+    # display IP address
     print("server is working on " + SERVER)
      
-    # listening for connections
+    # listen for clients
     server.listen()
      
     while True:
        
-        # accept connections and returns
-        # a new connection to the client
-        # and the address bound to it
+        # accept connections
         conn, addr = server.accept()
+
+        # request username
         conn.send("NAME".encode(FORMAT))
-         
-        # 1024 represents the max amount
-        # of data that can be received (bytes)
         name = conn.recv(1024).decode()
 
-        # challenge function
+        # send symmetric key (should be done after challenge-response authentication)
         key_message = "KEY ".encode(FORMAT) + key
         conn.send(key_message)
          
-        # append the name and client
-        # to the respective list
+        # add client to list
         names.append(name)
         clients.append(conn)
-         
         print(f"Name is: {name}")
          
-        # broadcast message
+        # letting all users know that someone joined
         broadcastMessage(secure_messaging.encrypt(f"{name} has joined the chat!", key))
 
         conn.send(secure_messaging.encrypt('Connection successful!', key))
          
-        # Start the handling thread
+        # Instantiate a thread to handle all messages from this client
         thread = threading.Thread(target = handle,
                                   args = (conn, addr))
         thread.start()
          
-        # no. of clients connected
-        # to the server
+        # number of clients connected to the server
         print(f"active connections {threading.activeCount()-1}")
 
-# indpiration from https://towardsdatascience.com/encrypting-your-data-9eac85364cb
+# send new client a challenge for user authentication
+# inspired by https://towardsdatascience.com/encrypting-your-data-9eac85364cb
 def challenge(conn, username):
+    # generate challenge message
     nonce = os.urandom(16)
 
-    with open(username + ".txt", "r") as file:
+    # look up public key of the client
+    with open(username, "r") as file:
         info = file.readlines()
 
     user_key = authentication.get_public_key(info[2].strip("\n"), info[3].strip("\n"))
     nonce_encr = authentication.encrypt(nonce, user_key)
 
+    # send challenge and wait for response
     conn.send(nonce_encr)
     nonce_back = conn.recv(1024)
 
     return nonce == nonce_back
 
-# method to handle the
-# incoming messages
+# handle the incoming messages from a client
 def handle(conn, addr):
    
     print(f"new connection {addr}")
     connected = True
      
     while connected:
-          # receive message
+        # receive message
         message = conn.recv(1024)
-         
+
         # broadcast message
         broadcastMessage(message)
      
     # close the connection
     conn.close()
  
-# method for broadcasting
-# messages to the each clients
+# broadcast incoming messages to all users
 def broadcastMessage(message):
     for client in clients:
         client.send(message)
  
-# call the method to
-# begin the communication
+
 startChat()
