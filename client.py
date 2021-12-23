@@ -31,16 +31,15 @@ def close_user():
     window_user.destroy()
 
 def end_session():
-    client.shutdown(socket.SHUT_RDWR)
-    client.close()
+    client.detach()
     window_home.destroy()
 
 
 # hashing function for password
 def hash_string(input_string):
     pb = bytes(input_string, FORMAT)
-    hash = hashlib.sha1(pb)
-    return hash.hexdigest()
+    hashed = hashlib.sha1(pb)
+    return hashed.hexdigest()
 
 
 # Graphical User Interface (GUI) for the chat window
@@ -114,7 +113,7 @@ class ChatGUI:
 
         # show chat window created earlier
         self.Window.deiconify()
-        self.Window.title("CHATROOM")
+        self.Window.title("Secure")
         self.Window.resizable(width=False,
                               height=False)
         self.Window.configure(width=470,
@@ -240,9 +239,10 @@ class ChatGUI:
 def main_screen():
     global window_home
     window_home = Tk()
-    window_home.geometry("350x250")
-    window_home.title("CHAT APP")
-    Label(text="CHAT APP", bg="#EADAEA", width="300", height="2", font=("Corbel", 13)).pack()
+    window_home.geometry("350x300")
+    window_home.title("SECURE")
+    Label(text="SECURE", bg="#EADAEA", width="300", height="2", font="Corbel 14 bold").pack()
+    Label(text="by Ravi Agarwal and Yde Sinnema", bg="#EADAEA", width="300", height="1", font="Corbel 10").pack()
     Label(text="").pack()
     Button(text="Login", width="20", height="2", command=login).pack()
     Label(text="").pack()
@@ -273,6 +273,7 @@ def register():
 
     username_entry = Entry(window_register, textvariable=username)
     username_entry.pack()
+    username_entry.focus()
     Label(window_register, text="Password *").pack()
     password_entry = Entry(window_register, textvariable=password)
     password_entry.pack()
@@ -299,7 +300,7 @@ def register_user():
     username_entry.delete(0, END)
     password_entry.delete(0, END)
 
-    Label(window_register, text="Registration Successful\nPlease close this window", fg="green", font=("Corbel", 11)).pack()
+    Label(window_register, text="Registration Successful\nPlease close this window", fg="green", font="Corbel 11").pack()
 
 # login window
 def login():
@@ -322,6 +323,7 @@ def login():
     Label(window_login, text="Username *").pack()
     username_entry1 = Entry(window_login, textvariable=username_verify)
     username_entry1.pack()
+    username_entry1.focus()
     Label(window_login, text="").pack()
     Label(window_login, text="Password *").pack()
     password_entry1 = Entry(window_login, textvariable=password_verify)
